@@ -151,7 +151,7 @@
 
   .task-row {
     display: grid;
-    grid-template-columns: 22px 1fr auto;
+    grid-template-columns: 22px 22px 1fr auto;
     grid-template-rows: auto auto;
     column-gap: 6px;
     align-items: center;
@@ -161,8 +161,25 @@
   .task-row:last-child { border-bottom: none; }
   .task-row.filled { border-bottom-style: solid; }
 
+  .task-done {
+    grid-column: 1; grid-row: 1;
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1.5px solid var(--line-strong);
+    background: transparent; padding: 0;
+    cursor: pointer; align-self: center;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: transparent; font-size: 10px; line-height: 1;
+    transition: all .15s;
+  }
+  .task-done:hover { border-color: var(--ink); }
+  .task-row.is-done .task-done {
+    background: #16A34A; border-color: #16A34A; color: #FFFFFF;
+  }
+  .task-row.is-done .task-done::after { content: "✓"; font-size: 11px; font-weight: 800; }
+  [data-theme="dark"] .task-row.is-done .task-done { background: #4ADE80; border-color: #4ADE80; color: #0E0E10; }
+
   .task-num {
-    grid-row: 1 / 3; align-self: start;
+    grid-column: 2; grid-row: 1 / 3; align-self: start;
     font-size: 11px; color: var(--muted-2); font-weight: 700;
     font-variant-numeric: tabular-nums; padding-top: 8px;
     text-align: right; padding-right: 4px;
@@ -170,7 +187,7 @@
   .task-row.filled .task-num { color: var(--ink-soft); }
 
   .task-title {
-    grid-column: 2; grid-row: 1;
+    grid-column: 3; grid-row: 1;
     border: none; outline: none; background: transparent;
     font-size: 13.5px; font-weight: 500; color: var(--ink);
     padding: 6px 4px; font-family: inherit;
@@ -181,8 +198,11 @@
   .task-title:focus { border-bottom-color: var(--ink); }
   .task-title::placeholder { color: var(--muted-2); font-weight: 400; }
 
+  .task-row.is-done .task-title { text-decoration: line-through; color: var(--muted); }
+  .task-row.is-done .task-meta { opacity: 0.5; }
+
   .task-meta {
-    grid-column: 2; grid-row: 2;
+    grid-column: 3; grid-row: 2;
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
     padding: 0 4px;
     font-size: 11.5px; color: var(--muted);
@@ -227,7 +247,7 @@
   .task-date.today { color: var(--q3-text); font-weight: 800; }
 
   .task-del {
-    grid-column: 3; grid-row: 1 / 3;
+    grid-column: 4; grid-row: 1 / 3;
     background: transparent; border: none;
     color: var(--muted-2); font-size: 18px; line-height: 1;
     padding: 4px 6px; border-radius: 4px;
@@ -237,14 +257,10 @@
   .task-del:hover { background: var(--q1-bg); color: var(--q1-text); }
 
   .quadrant-dot {
-    grid-column: 3; grid-row: 1;
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--line-strong);
-    align-self: center; justify-self: center;
-    margin-right: 8px;
+    flex-shrink: 0;
   }
-  .task-row:hover .quadrant-dot,
-  .task-row .task-del:not([style*="opacity: 0"]) ~ .quadrant-dot { display: none; }
   .task-row .quadrant-dot.q1 { background: var(--q1-text); }
   .task-row .quadrant-dot.q2 { background: var(--q2-text); }
   .task-row .quadrant-dot.q3 { background: var(--q3-text); }
@@ -333,9 +349,18 @@
     padding: 6px 8px; border-radius: 6px;
     background: rgba(255,255,255,0.55); border: 1px solid transparent;
     font-size: 12.5px; font-weight: 600; color: var(--ink);
+    cursor: grab; transition: transform .1s, opacity .15s;
   }
+  .q-task:active { cursor: grabbing; }
+  .q-task.dragging { opacity: 0.35; transform: scale(0.98); }
+  .q-task.done { opacity: 0.5; }
+  .q-task.done .qt-title { text-decoration: line-through; }
   [data-theme="dark"] .q-task { background: rgba(255,255,255,0.04); color: var(--ink); }
   .q-task .qt-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .q-task .qt-auto {
+    font-size: 11px; flex-shrink: 0;
+    cursor: help;
+  }
   .q-task .qt-date {
     font-size: 10.5px; font-weight: 700; padding: 1px 6px;
     border-radius: 4px; font-variant-numeric: tabular-nums;
@@ -345,6 +370,17 @@
   .q-task .qt-date.overdue { background: var(--q1-text); color: #fff; }
   .q-task .qt-date.today { background: var(--q3-text); color: #fff; }
   [data-theme="dark"] .q-task .qt-date { background: rgba(255,255,255,0.08); }
+
+  /* Drop target highlight */
+  .quadrant { transition: outline .15s; }
+  .quadrant.drop-target {
+    outline: 2px dashed currentColor;
+    outline-offset: -3px;
+  }
+  .quadrant.q1.drop-target { outline-color: var(--q1-text); }
+  .quadrant.q2.drop-target { outline-color: var(--q2-text); }
+  .quadrant.q3.drop-target { outline-color: var(--q3-text); }
+  .quadrant.q4.drop-target { outline-color: var(--q4-text); }
 
   .q-empty {
     font-size: 11.5px; color: var(--muted); font-style: italic;
@@ -430,7 +466,7 @@
         </div>
       </div>
       <div class="matrix">
-        <div class="quadrant q2">
+        <div class="quadrant q2" data-quadrant="q2">
           <div class="q-head">
             <div class="q-title-row">
               <h3 class="q-title">Schedule (계획 수립)</h3>
@@ -440,7 +476,7 @@
           </div>
           <div class="q-list" id="list-q2"></div>
         </div>
-        <div class="quadrant q1">
+        <div class="quadrant q1" data-quadrant="q1">
           <div class="q-head">
             <div class="q-title-row">
               <h3 class="q-title">Do First (즉시 실행)</h3>
@@ -450,7 +486,7 @@
           </div>
           <div class="q-list" id="list-q1"></div>
         </div>
-        <div class="quadrant q4">
+        <div class="quadrant q4" data-quadrant="q4">
           <div class="q-head">
             <div class="q-title-row">
               <h3 class="q-title">Don't Do (삭제/보류)</h3>
@@ -460,7 +496,7 @@
           </div>
           <div class="q-list" id="list-q4"></div>
         </div>
-        <div class="quadrant q3">
+        <div class="quadrant q3" data-quadrant="q3">
           <div class="q-head">
             <div class="q-title-row">
               <h3 class="q-title">Delegate (위임)</h3>
@@ -522,11 +558,24 @@
     return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   }
 
+  // 마감일 D-3 이내면 자동으로 긴급 처리 (사용자가 수동으로 체크한 긴급은 그대로 유지)
+  function effectiveUrgent(t) {
+    if (t.urgent) return true;
+    if (!t.deadline) return false;
+    const d = daysBetween(t.deadline);
+    return d !== null && d <= 3;
+  }
+
   function quadrantOf(t) {
-    if (t.important && t.urgent) return "q1";
-    if (t.important && !t.urgent) return "q2";
-    if (!t.important && t.urgent) return "q3";
+    const urgent = effectiveUrgent(t);
+    if (t.important && urgent) return "q1";
+    if (t.important && !urgent) return "q2";
+    if (!t.important && urgent) return "q3";
     return "q4";
+  }
+
+  function isAutoPromoted(t) {
+    return !t.urgent && effectiveUrgent(t);
   }
 
   function deadlineState(iso) {
@@ -544,12 +593,14 @@
     for (let i = 0; i < rowCount; i++) {
       const t = tasks[i];
       const row = document.createElement("div");
-      row.className = "task-row" + (t && t.title.trim() ? " filled" : "");
+      const isDone = !!(t && t.done);
+      row.className = "task-row" + (t && t.title.trim() ? " filled" : "") + (isDone ? " is-done" : "");
 
       const q = t ? quadrantOf(t) : null;
       const dateState = t && t.deadline ? deadlineState(t.deadline) : "";
 
       row.innerHTML =
+        '<button class="task-done" type="button" data-idx="' + i + '" tabindex="-1" aria-label="완료 토글"' + (t ? '' : ' style="visibility:hidden"') + '></button>' +
         '<span class="task-num">' + (i + 1) + '</span>' +
         '<input class="task-title" type="text" data-idx="' + i + '" placeholder="할 일 입력..." value="' + (t ? escapeHtml(t.title) : "") + '" />' +
         '<button class="task-del" data-idx="' + i + '" title="삭제" tabindex="-1">×</button>' +
@@ -557,7 +608,7 @@
           '<label class="task-chk"><input type="checkbox" data-idx="' + i + '" data-field="urgent"' + (t && t.urgent ? " checked" : "") + ' /> <span class="chk-text">긴급</span></label>' +
           '<label class="task-chk"><input type="checkbox" data-idx="' + i + '" data-field="important"' + (t && t.important ? " checked" : "") + ' /> <span class="chk-text">중요</span></label>' +
           '<input type="date" class="task-date ' + (t && t.deadline ? "has-value" : "") + " " + dateState + '" data-idx="' + i + '" value="' + (t && t.deadline ? t.deadline : "") + '" />' +
-          (q ? '<span class="quadrant-dot ' + q + '"></span>' : '') +
+          (q ? '<span class="quadrant-dot ' + q + '" title="' + q.toUpperCase() + '"></span>' : '') +
         '</div>';
 
       const titleInput = row.querySelector(".task-title");
@@ -574,10 +625,18 @@
       });
       row.querySelector(".task-date").addEventListener("change", e => updateField(i, "deadline", e.target.value || null));
       row.querySelector(".task-del").addEventListener("click", () => deleteTask(i));
+      row.querySelector(".task-done").addEventListener("click", () => toggleDone(i));
 
       listEl.appendChild(row);
     }
-    document.getElementById("taskCount").textContent = tasks.filter(t => t && t.title.trim()).length;
+    document.getElementById("taskCount").textContent = tasks.filter(t => t && t.title.trim() && !t.done).length;
+  }
+
+  function toggleDone(idx) {
+    if (!tasks[idx]) return;
+    tasks[idx].done = !tasks[idx].done;
+    saveTasks();
+    render();
   }
 
   function renderMatrix() {
@@ -585,8 +644,9 @@
       const list = document.getElementById("list-" + q);
       list.innerHTML = "";
       const items = tasks.filter(t => t && t.title.trim() && quadrantOf(t) === q);
-      // Sort: overdue first, then by deadline asc, then by index
+      // Sort: done last, then by deadline asc
       items.sort((a, b) => {
+        if (!!a.done !== !!b.done) return a.done ? 1 : -1;
         const da = a.deadline ? daysBetween(a.deadline) : 99999;
         const db = b.deadline ? daysBetween(b.deadline) : 99999;
         return da - db;
@@ -596,16 +656,30 @@
       } else {
         items.forEach(t => {
           const el = document.createElement("div");
-          el.className = "q-task";
+          el.className = "q-task" + (t.done ? " done" : "");
+          el.draggable = !t.done;
+          el.dataset.taskId = t.id;
           const dState = t.deadline ? deadlineState(t.deadline) : "";
+          const auto = isAutoPromoted(t);
           el.innerHTML =
             '<span class="qt-title"></span>' +
+            (auto ? '<span class="qt-auto" title="마감 D-3 이내라 자동으로 긴급 처리됨">🔥</span>' : '') +
             (t.deadline ? '<span class="qt-date ' + dState + '">' + fmtDate(t.deadline) + '</span>' : '');
           el.querySelector(".qt-title").textContent = t.title;
+
+          // Drag handlers
+          el.addEventListener("dragstart", (e) => {
+            if (t.done) { e.preventDefault(); return; }
+            e.dataTransfer.setData("text/plain", t.id);
+            e.dataTransfer.effectAllowed = "move";
+            el.classList.add("dragging");
+          });
+          el.addEventListener("dragend", () => el.classList.remove("dragging"));
+
           list.appendChild(el);
         });
       }
-      document.getElementById("cnt-" + q).textContent = items.length;
+      document.getElementById("cnt-" + q).textContent = items.filter(t => !t.done).length;
     });
   }
 
@@ -614,14 +688,14 @@
   function updateField(idx, field, value) {
     if (!tasks[idx]) {
       if (field === "title" && (!value || value.trim() === "")) return;
-      tasks[idx] = { id: uid(), title: "", urgent: false, important: false, deadline: null };
+      tasks[idx] = { id: uid(), title: "", urgent: false, important: false, deadline: null, done: false };
     }
     tasks[idx][field] = value;
     saveTasks();
     // For title, only re-render matrix (avoid stealing focus)
     if (field === "title") {
       renderMatrix();
-      document.getElementById("taskCount").textContent = tasks.filter(t => t && t.title.trim()).length;
+      document.getElementById("taskCount").textContent = tasks.filter(t => t && t.title.trim() && !t.done).length;
     } else {
       render();
     }
@@ -650,6 +724,31 @@
     applyTheme(next);
   });
   applyTheme(loadTheme());
+
+  // ===== Drag & drop: 매트릭스 4분면 간 이동 =====
+  document.querySelectorAll(".quadrant").forEach(q => {
+    q.addEventListener("dragover", e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      q.classList.add("drop-target");
+    });
+    q.addEventListener("dragleave", e => {
+      if (!q.contains(e.relatedTarget)) q.classList.remove("drop-target");
+    });
+    q.addEventListener("drop", e => {
+      e.preventDefault();
+      q.classList.remove("drop-target");
+      const id = e.dataTransfer.getData("text/plain");
+      const newQ = q.dataset.quadrant;
+      const task = tasks.find(t => t && t.id === id);
+      if (!task || !newQ) return;
+      // Map quadrant to important/urgent flags
+      task.important = (newQ === "q1" || newQ === "q2");
+      task.urgent = (newQ === "q1" || newQ === "q3");
+      saveTasks();
+      render();
+    });
+  });
 
   // ===== Init =====
   render();
