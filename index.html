@@ -269,13 +269,40 @@
   /* === Matrix panel === */
   .matrix-area { position: relative; padding: 0 24px 26px 36px; }
   .matrix-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; margin-bottom: 14px;
   }
+  .matrix-title-block { flex: 1; min-width: 0; }
   .matrix-title {
     font-size: 26px; font-weight: 800; color: var(--ink);
     letter-spacing: -0.02em; margin: 0;
   }
+  .matrix-subtitle {
+    font-size: 13px; color: var(--ink-soft);
+    margin: 6px 0 0; font-weight: 500;
+    letter-spacing: -0.005em; line-height: 1.55;
+    max-width: 720px;
+  }
+  .matrix-subtitle em { font-style: normal; color: var(--ink); font-weight: 800; }
+  .matrix-subtitle strong { color: var(--ink); font-weight: 800; }
+
+  .axis-legend {
+    display: flex; gap: 28px; flex-wrap: wrap;
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 11.5px; color: var(--muted);
+    line-height: 1.5;
+  }
+  .axis-def { display: flex; gap: 8px; align-items: baseline; flex: 1; min-width: 240px; }
+  .axis-def .axis-key {
+    font-weight: 800; color: var(--ink); letter-spacing: 0.02em;
+    flex-shrink: 0; font-size: 11px;
+  }
+  .axis-def .axis-desc { color: var(--ink-soft); }
+  .axis-def em { font-style: italic; color: var(--muted); font-weight: 500; }
   .matrix-counts {
     display: flex; gap: 16px; font-size: 11px; font-weight: 700;
     letter-spacing: 0.06em; color: var(--muted);
@@ -333,6 +360,16 @@
   .quadrant.q2 .q-axis { color: var(--q2-text); opacity: 0.7; }
   .quadrant.q3 .q-axis { color: var(--q3-text); opacity: 0.7; }
   .quadrant.q4 .q-axis { color: var(--q4-text); opacity: 0.7; }
+
+  .q-desc {
+    font-size: 11.5px; line-height: 1.55;
+    margin-top: 6px; font-weight: 500;
+  }
+  .quadrant.q1 .q-desc { color: var(--q1-text); }
+  .quadrant.q2 .q-desc { color: var(--q2-text); }
+  .quadrant.q3 .q-desc { color: var(--q3-text); }
+  .quadrant.q4 .q-desc { color: var(--q4-text); }
+  .q-desc strong { font-weight: 800; }
 
   .q-list {
     display: flex; flex-direction: column; gap: 6px;
@@ -437,6 +474,41 @@
     content: "→"; margin-left: 6px; font-size: 14px;
   }
 
+  /* Panel help (Task List 안내) */
+  .panel-help {
+    font-size: 12px; color: var(--ink-soft);
+    line-height: 1.55; margin: 0 0 12px;
+    padding: 9px 11px;
+    background: var(--bg); border-left: 3px solid var(--ink-soft);
+    border-radius: 0 6px 6px 0;
+    font-weight: 500;
+  }
+  .panel-help strong { color: var(--ink); font-weight: 800; }
+  .panel-help em { font-style: normal; color: var(--ink); font-weight: 700; }
+
+  /* Insight bar (도구의 '왜') */
+  .insight-bar {
+    margin-top: 26px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--q2-bg-soft) 0%, var(--q2-bg) 100%);
+    border-left: 4px solid var(--q2-text);
+    border-radius: 10px;
+  }
+  [data-theme="dark"] .insight-bar { background: linear-gradient(135deg, rgba(96,165,250,0.08), rgba(96,165,250,0.14)); }
+  .insight-text {
+    font-size: 13.5px; color: var(--ink); margin: 0;
+    line-height: 1.65; font-weight: 500;
+  }
+  .insight-text em { font-style: normal; color: var(--ink-soft); font-weight: 700; }
+  .insight-text strong { color: var(--q2-text); font-weight: 800; }
+  .insight-sub {
+    font-size: 12px; color: var(--ink-soft); margin: 8px 0 0;
+    line-height: 1.6; font-weight: 500;
+    padding-top: 8px; border-top: 1px dashed var(--q2-line);
+  }
+  .insight-sub em { font-style: normal; color: var(--ink); font-weight: 700; }
+  .insight-sub strong { color: var(--q3-text); font-weight: 800; }
+
   /* Footer */
   .footer {
     margin-top: 22px; padding-top: 14px;
@@ -474,6 +546,7 @@
     <section class="panel">
       <h2 class="panel-title">Task List</h2>
       <div class="panel-divider"></div>
+      <p class="panel-help">적은 뒤 <strong>긴급/중요</strong>에 체크하세요. <em>시한이 있으면 → 긴급. 내 목표에 기여하면 → 중요.</em> 두 체크로 칸이 자동 분류됩니다.</p>
       <div class="panel-meta">
         <span>등록된 할 일</span>
         <span class="count" id="taskCount">0</span>
@@ -485,12 +558,25 @@
     <section class="matrix-area">
       <div class="axis-y">IMPORTANCE (중요도)</div>
       <div class="matrix-header">
-        <h2 class="matrix-title">Eisenhower Matrix</h2>
+        <div class="matrix-title-block">
+          <h2 class="matrix-title">Eisenhower Matrix</h2>
+          <p class="matrix-subtitle">긴급은 <em>시간</em>이 정하고, 중요는 <em>목표</em>가 정한다. 할 일을 두 축으로 나눠 <strong>무엇부터 할지, 무엇을 남에게 넘길지</strong>를 결정합니다.</p>
+        </div>
         <div class="matrix-counts">
           <span class="c"><span class="dot" style="background:var(--q1-text)"></span>Q1 <span class="num" id="cnt-q1">0</span></span>
           <span class="c"><span class="dot" style="background:var(--q2-text)"></span>Q2 <span class="num" id="cnt-q2">0</span></span>
           <span class="c"><span class="dot" style="background:var(--q3-text)"></span>Q3 <span class="num" id="cnt-q3">0</span></span>
           <span class="c"><span class="dot" style="background:var(--q4-text)"></span>Q4 <span class="num" id="cnt-q4">0</span></span>
+        </div>
+      </div>
+      <div class="axis-legend">
+        <div class="axis-def">
+          <span class="axis-key">↑ IMPORTANCE · 중요</span>
+          <span class="axis-desc">내 목표·미래 성과에 기여하는가? <em>(답은 '목표'에 있다)</em></span>
+        </div>
+        <div class="axis-def">
+          <span class="axis-key">→ URGENCY · 긴급</span>
+          <span class="axis-desc">정해진 시한이 있는가? <em>(답은 '시계'에 있다)</em></span>
         </div>
       </div>
       <div class="matrix">
@@ -501,6 +587,7 @@
               <span class="q-icon">🗓</span>
             </div>
             <div class="q-axis">IMPORTANT · NOT URGENT</div>
+            <div class="q-desc">일정을 잡는다. 전략·사람·역량. <strong>여기에 미래가 있다.</strong></div>
           </div>
           <div class="q-list" id="list-q2"></div>
         </div>
@@ -511,6 +598,7 @@
               <span class="q-icon">🔥</span>
             </div>
             <div class="q-axis">IMPORTANT · URGENT</div>
+            <div class="q-desc">지금 한다. 위기·마감 임박·터진 문제.</div>
           </div>
           <div class="q-list" id="list-q1"></div>
         </div>
@@ -521,6 +609,7 @@
               <span class="q-icon">🗑</span>
             </div>
             <div class="q-axis">NOT IMPORTANT · NOT URGENT</div>
+            <div class="q-desc">버린다. 습관적 확인·의미 없는 일.</div>
           </div>
           <div class="q-list" id="list-q4"></div>
         </div>
@@ -531,6 +620,7 @@
               <span class="q-icon">👥</span>
             </div>
             <div class="q-axis">NOT IMPORTANT · URGENT</div>
+            <div class="q-desc">남에게 넘긴다. 시끄럽지만 내가 안 해도 될 일.</div>
           </div>
           <div class="q-list" id="list-q3"></div>
         </div>
@@ -539,6 +629,11 @@
     </section>
 
   </main>
+
+  <section class="insight-bar">
+    <p class="insight-text">사람은 <em>급한 것(Delegate 칸)</em>에 하루를 다 쓰고 <em>중요한 것(Schedule 칸)</em>을 미룹니다. <strong>'중요하지만 안 급한 일'을 먼저 일정에 넣는 것</strong> — 그것이 이 도구의 목적입니다.</p>
+    <p class="insight-sub">위임은 <em>긴급</em>이 아니라 <strong>중요도</strong>로 가릅니다. 안 중요한 건 넘기고, 중요한 것에 나를 모읍니다.</p>
+  </section>
 
   <footer class="footer">
     <span class="footer-credit"><strong>Business Is Love</strong> · 가인지컨설팅그룹 · 제작 임종은 연구원(Tim) · 내 전부로 당신을 빛나게</span>
