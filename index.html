@@ -371,6 +371,34 @@
   .q-task .qt-date.today { background: var(--q3-text); color: #fff; }
   [data-theme="dark"] .q-task .qt-date { background: rgba(255,255,255,0.08); }
 
+  /* Matrix card actions (edit/delete) */
+  .q-task .qt-actions {
+    display: flex; gap: 2px; flex-shrink: 0;
+    opacity: 0; transition: opacity .15s;
+  }
+  .q-task:hover .qt-actions { opacity: 1; }
+  .q-task .qt-btn {
+    background: transparent; border: none;
+    padding: 2px 5px; border-radius: 4px;
+    cursor: pointer; font-size: 12px; line-height: 1;
+    color: var(--muted);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .q-task .qt-btn:hover { background: rgba(0,0,0,0.08); color: var(--ink); }
+  .q-task .qt-btn.qt-del:hover { background: var(--q1-bg); color: var(--q1-text); }
+  [data-theme="dark"] .q-task .qt-btn:hover { background: rgba(255,255,255,0.10); color: var(--ink); }
+  [data-theme="dark"] .q-task .qt-btn.qt-del:hover { background: rgba(248,113,113,0.20); color: var(--q1-text); }
+
+  .q-task.editing { cursor: text; outline: 2px solid var(--ink); outline-offset: -1px; }
+  .q-task .qt-title-input {
+    flex: 1; min-width: 0;
+    border: none; outline: none;
+    background: transparent; padding: 0;
+    font-family: inherit; font-size: 12.5px; font-weight: 600;
+    color: var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
+
   /* Drop target highlight */
   .quadrant { transition: outline .15s; }
   .quadrant.drop-target {
@@ -639,6 +667,56 @@
     render();
   }
 
+  function deleteTaskById(id) {
+    const idx = tasks.findIndex(t => t && t.id === id);
+    if (idx < 0) return;
+    const t = tasks[idx];
+    if (!confirm("이 할 일을 삭제하시겠습니까?\n\n" + (t.title || "(빈 항목)"))) return;
+    tasks.splice(idx, 1);
+    saveTasks();
+    render();
+  }
+
+  function startMatrixEdit(cardEl, taskId) {
+    const task = tasks.find(t => t && t.id === taskId);
+    if (!task) return;
+    if (cardEl.classList.contains("editing")) return;
+
+    const titleEl = cardEl.querySelector(".qt-title");
+    const original = task.title;
+    cardEl.classList.add("editing");
+    cardEl.draggable = false;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = original;
+    input.className = "qt-title-input";
+    input.maxLength = 200;
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let settled = false;
+    const finish = (save) => {
+      if (settled) return;
+      settled = true;
+      if (save) {
+        const newTitle = input.value.trim();
+        if (newTitle && newTitle !== original) {
+          task.title = newTitle;
+          saveTasks();
+        }
+      }
+      render();
+    };
+
+    input.addEventListener("blur", () => finish(true));
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); finish(true); }
+      else if (e.key === "Escape") { e.preventDefault(); finish(false); }
+    });
+  }
+
   function renderMatrix() {
     ["q1","q2","q3","q4"].forEach(q => {
       const list = document.getElementById("list-" + q);
@@ -664,17 +742,36 @@
           el.innerHTML =
             '<span class="qt-title"></span>' +
             (auto ? '<span class="qt-auto" title="마감 D-3 이내라 자동으로 긴급 처리됨">🔥</span>' : '') +
-            (t.deadline ? '<span class="qt-date ' + dState + '">' + fmtDate(t.deadline) + '</span>' : '');
+            (t.deadline ? '<span class="qt-date ' + dState + '">' + fmtDate(t.deadline) + '</span>' : '') +
+            '<span class="qt-actions">' +
+              '<button class="qt-btn qt-edit" type="button" title="제목 수정">✎</button>' +
+              '<button class="qt-btn qt-del" type="button" title="삭제">×</button>' +
+            '</span>';
           el.querySelector(".qt-title").textContent = t.title;
 
           // Drag handlers
           el.addEventListener("dragstart", (e) => {
-            if (t.done) { e.preventDefault(); return; }
+            if (t.done || el.classList.contains("editing")) { e.preventDefault(); return; }
             e.dataTransfer.setData("text/plain", t.id);
             e.dataTransfer.effectAllowed = "move";
             el.classList.add("dragging");
           });
           el.addEventListener("dragend", () => el.classList.remove("dragging"));
+
+          // Edit/delete buttons
+          el.querySelector(".qt-edit").addEventListener("click", (e) => {
+            e.stopPropagation();
+            startMatrixEdit(el, t.id);
+          });
+          el.querySelector(".qt-del").addEventListener("click", (e) => {
+            e.stopPropagation();
+            deleteTaskById(t.id);
+          });
+          // Double-click title also enters edit
+          el.querySelector(".qt-title").addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            startMatrixEdit(el, t.id);
+          });
 
           list.appendChild(el);
         });
